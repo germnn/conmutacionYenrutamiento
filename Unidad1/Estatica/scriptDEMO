@@ -1,0 +1,62 @@
+// CONFIGURACION BASICA 	USAR ROUTER QUE SOPORTE V6 1841/2911
+
+ena
+conf t
+hostname TORRE1
+--enable secret cisco
+line console 0
+password cisco
+login
+line vty 0 15
+password cisco
+login
+banner motd#
+***
+	ACCESO SOLO A PERSONAL AUTORIZADO
+	SE APLICARAN SANCIONES **#
+service password-encryption
+
+
+// CONFIGURACION BASICA
+ena
+conf t
+hostname TORRE2
+--enable secret cisco
+line console 0
+password cisco
+login
+line vty 0 15
+password cisco
+login
+banner motd#
+***
+	ACCESO SOLO A PERSONAL AUTORIZADO
+	SE APLICARAN SANCIONES **#
+service password-encryption
+
+
+// CONFIGURACION BASICA
+ena
+conf t
+hostname TORRE3
+--enable secret cisco
+line console 0
+password cisco
+login
+line vty 0 15
+password cisco
+login
+banner motd#
+***
+	ACCESO SOLO A PERSONAL AUTORIZADO
+	SE APLICARAN SANCIONES **#
+service password-encryption
+
+
+// INTERFACES CONFIGURACION DE IPV6 ROUTER TORRE1
+
+ipv6 unicast-routing
+
+int fa0/0
+description Red LAN R1
+

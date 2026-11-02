@@ -1,0 +1,117 @@
+
+
+	--- ROUTER UNO ---
+enable
+conf t
+hostname UNO
+no ip domain-lookup
+banner motd #---Solo personal autorizado---#
+
+interface se0/0 
+ip address 200.35.71.9 255.255.255.252
+description Enlace_UNO_TRES
+no shutdown
+exit
+
+interface lo1
+ip add 200.35.65.1 255.255.255.128
+exit
+
+interface lo2
+ip add 200.35.65.129 255.255.255.128
+exit
+
+ip route 0.0.0.0 0.0.0.0 se0/0
+
+------------
+
+	--- ROUTER DOS ---
+enable
+conf t
+hostname DOS
+no ip domain-lookup
+banner motd #---Solo personal autorizado---#
+
+interface se0/0 
+ip address 200.35.71.2 255.255.255.252
+description Enlace_DOS_TRES
+no shutdown
+exit
+
+interface lo3
+ip add 200.35.67.1 255.255.255.192
+exit
+
+interface lo4
+ip add 200.35.67.65 255.255.255.192
+exit
+
+ip route 0.0.0.0 0.0.0.0 se0/0
+
+----------
+
+
+	--- ROUTER CUATRO ---
+enable
+conf t
+hostname CUATRO
+no ip domain-lookup
+banner motd #---Solo personal autorizado---#
+
+interface se0/0/1 
+ip address 200.35.71.6 255.255.255.252
+description Enlace_CUATRO_TRES
+no shutdown
+exit
+
+interface lo5
+ip add 200.35.68.129 255.255.255.192
+exit
+
+interface lo6
+ip add 200.35.68.193 255.255.255.192
+exit
+
+ip route 0.0.0.0 0.0.0.0 se0/0/1
+
+------------
+
+	--- ROUTER TRES ---
+
+enable
+conf t
+hostname TRES
+no ip domain-lookup
+banner motd #---Solo personal autorizado---#
+
+interface se0/0 
+ip address 200.35.71.10 255.255.255.252
+description Enlace_TRES_UNO
+no shutdown
+exit
+
+interface se0/1 
+ip address 200.35.71.1 255.255.255.252
+description Enlace_TRES_DOS
+no shutdown
+exit
+
+interface se0/2
+ip address 200.35.71.5 255.255.255.252
+description Enlace_TRES_CUATRO
+no shutdown
+exit
+
+ip route 200.35.65.0 255.255.255.0 200.35.71.9
+ip route 200.35.67.0 255.255.255.128 200.35.71.2
+ip route 200.35.68.128 255.255.255.128 200.35.71.6
+
+
+
+
+
+
+
+
+
+

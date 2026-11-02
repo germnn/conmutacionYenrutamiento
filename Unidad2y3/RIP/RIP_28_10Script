@@ -1,0 +1,117 @@
+
+
+
+
+
+
+!--------------- ROuter 1
+enable
+conf t
+hostname R1
+no ip domain-lookup
+banner motd #SOlo personal autorizado#
+
+!--------------- ROuter 2
+enable
+conf t
+hostname R2
+no ip domain-lookup
+banner motd #SOlo personal autorizado#
+
+!--------------- ROuter 3
+enable
+conf t
+hostname R3
+no ip domain-lookup
+banner motd #SOlo personal autorizado#
+
+!--------------------- COnfiguracion de interfaces
+!------ Router r1
+interface s0/0/0
+ip address 192.168.1.1 255.255.255.0
+clock rate 128000
+no shutdown 
+exit
+
+int g0/0
+ip address 11.255.255.254 255.0.0.0
+no shutdown
+exit
+
+int lo1
+ip address 200.33.16.1 255.255.255.0
+exit
+
+
+!------ Router r2
+int s0/0/0
+ip address 192.168.1.2 255.255.255.0
+clock rate 128000
+no shutdown
+exit
+
+int s0/0/1
+ip address 192.168.2.2 255.255.255.0
+clock rate 128000
+no shut
+exit
+
+int lo1
+ip address 200.33.18.1 255.255.255.128
+exit
+
+int lo2
+ip address 200.33.18.129 255.255.255.128
+exit
+
+!------ Router r3
+int s0/0/0
+ip add 192.168.2.1 255.255.255.0
+clock rate 128000
+no shut
+exit
+
+int g0/0
+ip add 10.255.255.254 255.0.0.0
+no shut
+exit
+
+int lo1
+ip add 200.33.17.1 255.255.255.0
+exit
+
+
+!------- Enrutamiento dinamico
+!------ Router 1
+ena
+conf t
+router rip
+version 2
+network 192.168.1.0
+network 11.0.0.0
+network 200.33.16.0
+passive-interface g0/0
+
+!------ Router 2
+ena
+conf t
+router rip
+version 2
+network 192.168.1.0
+network 192.168.2.0
+network 200.33.18.0
+network 200.33.18.128
+
+!------ Router 3
+ena
+conf t
+router rip
+version 2
+network 192.168.2.0
+network 10.0.0.0
+network 200.33.17.0
+passive-interface g0/0
+
+
+!------------ Switches
+!-----

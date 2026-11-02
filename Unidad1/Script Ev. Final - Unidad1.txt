@@ -1,0 +1,647 @@
+﻿------------------------------------Torre UNO DHCP
+enable
+configure terminal
+hostname UNO
+no ip domain-lookup
+banner motd #Solo personal autorizado#
+
+
+ipv6 unicast-routing
+
+
+ip dhcp pool DHCP-POOL-LAN1
+ network 172.18.2.128 255.255.255.224
+ default-router 172.18.2.129
+ip dhcp excluded-address 172.18.2.129 172.18.2.130
+
+
+
+
+ipv6 dhcp pool DHCPV6-LAN1
+ address prefix D2:3::/64
+ dns-server D2:3::10
+ domain-name cisco.com
+
+
+
+
+interface GigabitEthernet0/0
+ description LAN PC0
+ ip address 172.18.2.129 255.255.255.224
+ ipv6 address D2:3::1/64
+ ipv6 address FE80::1 link-local
+ ipv6 nd managed-config-flag
+ !-----ipv6 nd prefix default no-autoconfig
+ ipv6 dhcp server DHCPV6-LAN1
+ no shutdown
+ exit
+
+
+int Se0/0/0
+description Red Wan T1-T2
+ip add 11.0.0.6 255.255.255.252
+ipv6 address ACAD:2::6/64
+ipv6 address FE80::1 link-local
+clock rate 128000
+no shut
+exit
+
+
+int Se0/0/1
+description Red Wan T1-T3
+ip add 10.0.0.6 255.255.255.252
+ipv6 address CAFE:2::6/64
+ipv6 address FE80::1 link-local
+clock rate 128000
+no shut
+exit
+
+
+interface loopback1
+description Red LoopBack80
+ip add 172.18.2.1 255.255.255.128
+ipv6 address D2:2::1/64
+ipv6 address FE80::1 link-local
+exit
+
+
+interface loopback2
+description Red LoopBack300
+ip add 172.18.0.1 255.255.254.0
+ipv6 address D2:1::1/64
+ipv6 address FE80::1 link-local
+exit
+
+
+ip route 0.0.0.0 0.0.0.0 11.0.0.5
+ip route 0.0.0.0 0.0.0.0 10.0.0.5 5
+ip route 172.19.0.0 255.255.240.0 10.0.0.5 
+ip route 172.19.0.0 255.255.240.0 11.0.0.5 5
+
+
+ipv6 route ::/0 ACAD:2::5
+ipv6 route ::/0 CAFE:2::5 5
+ipv6 route D3::/30 CAFE:2::5
+ipv6 route D3::/30 ACAD:2::5 5
+
+
+============================S1
+enable
+conf term
+hostname S1
+int VLAN1
+Ip add 172.18.2.130 255.255.255.224
+no shut
+ip default-gateway 172.18.2.129
+
+
+------------------------------------Torre DOS SSH
+enable
+configure terminal
+hostname DOS
+no ip domain-lookup
+
+
+ip domain-name cisco.com
+===Se recomienda usar 1024
+crypto key generate rsa 
+ip ssh version 2
+ip ssh time-out 60
+ip ssh authentication-retries 2
+line vty 0 4
+login local
+transport input ssh
+username ADMIN privilege 15 secret cisco111
+username REMOTO privilege 1 secret cisco222
+
+
+=====Realizar pruebas de SSH desde el PC
+ssh -l ADMIN 192.168.1.1
+=====Revision de conexion SSH en el Switch ssh
+show ip ssh
+show crypto key mypubkey rsa
+show ssh
+
+
+====================================
+
+
+ipv6 unicast-routing
+
+
+int GIG0/0
+description LAN PC1
+ip add 172.16.0.1 255.255.255.224
+ipv6 address CB:1::1/64
+ipv6 address FE80::2 link-local
+no shutdown
+
+
+int GIG0/1
+description Enlace T2-T5
+ip add 10.0.0.1 255.255.255.252
+ipv6 address CAFE:1::1/64
+ipv6 address FE80::2 link-local
+no shutdown
+
+
+int Se0/0/0
+description Red Wan T2-T3
+ip add 11.0.0.2 255.255.255.252
+ipv6 address ACAD:1::2/64
+ipv6 address FE80::2 link-local
+clock rate 128000
+no shut
+exit
+
+
+int Se0/0/1
+description Red Wan T2-T1
+ip add 11.0.0.5 255.255.255.252
+ipv6 address ACAD:2::5/64
+ipv6 address FE80::2 link-local
+clock rate 128000
+no shut
+exit
+
+
+ip route 0.0.0.0 0.0.0.0 10.0.0.2
+ip route 172.19.0.0 255.255.240.0 11.0.0.1
+ip route 172.19.0.0 255.255.240.0 11.0.0.6 5
+ip route 172.18.0.0 255.255.252.0 11.0.0.6
+ip route 172.18.0.0 255.255.252.0 11.0.0.1 5
+ip route 10.0.0.4 255.255.255.252 11.0.0.1
+ip route 10.0.0.4 255.255.255.252 11.0.0.6 5
+
+
+ipv6 route ::/0 CAFE:1::2
+ipv6 route D3::/30 ACAD:1::1
+ipv6 route D3::/30 ACAD:2::6 5
+ipv6 route D2::/30 ACAD:2::6
+ipv6 route D2::/30 ACAD:1::1 5
+ipv6 route CAFE:2::/64 ACAD:1::1
+ipv6 route CAFE:2::/64 ACAD:2::6 5
+
+
+============================S2
+enable
+conf term
+hostname S2
+int VLAN1
+Ip add 172.16.0.2 255.255.255.224
+no shut
+ip default-gateway 172.16.0.1
+
+
+
+
+------------------------------------Torre TRES DHCP
+enable
+configure terminal
+hostname TRES
+no ip domain-lookup
+banner motd #Solo personal autorizado#
+
+
+ipv6 unicast-routing
+
+
+ip dhcp pool DHCP-POOL-LAN1
+network 172.19.10.0 255.255.255.224
+default-router 172.19.10.1
+ip dhcp excluded-address 172.19.10.1 172.19.10.2
+
+
+ipv6 dhcp pool DHCPV6-LAN1
+ address prefix D3:3::/64
+ dns-server D3:3::10
+ domain-name cisco.com
+
+
+interface GigabitEthernet0/0
+ description LAN PC2
+ ip address 172.19.10.1 255.255.255.224
+ ipv6 address D3:3::1/64
+ ipv6 address FE80::3 link-local
+ ipv6 nd managed-config-flag
+ !-----ipv6 nd prefix default no-autoconfig
+ ipv6 dhcp server DHCPV6-LAN1
+ no shutdown
+ exit
+
+
+int Se0/3/1
+description Red Wan T3-T2
+ip add 11.0.0.1 255.255.255.252
+ipv6 address ACAD:1::1/64
+ipv6 address FE80::3 link-local
+clock rate 128000
+no shut
+exit
+
+
+int Se0/3/0
+description Red Wan T3-T1
+ip add 10.0.0.5 255.255.255.252
+ipv6 address CAFE:2::5/64
+ipv6 address FE80::3 link-local
+clock rate 128000
+no shut
+exit
+
+
+interface loopback1
+description Red LoopBack300
+ip add 172.19.8.1 255.255.254.0
+ipv6 address D3:2::1/64
+ipv6 address FE80::3 link-local
+exit
+
+
+interface loopback2
+description Red LoopBack2000
+ip add 172.19.0.1 255.255.248.0
+ipv6 address D3:1::1/64
+ipv6 address FE80::3 link-local
+exit
+
+
+ip route 0.0.0.0 0.0.0.0 11.0.0.2
+ip route 0.0.0.0 0.0.0.0 10.0.0.6 5
+ip route 172.18.0.0 255.255.252.0 10.0.0.6
+ip route 172.18.0.0 255.255.252.0 11.0.0.2 5
+
+
+ipv6 route ::/0 ACAD:1::2
+ipv6 route ::/0 CAFE:2::6 5
+ipv6 route D2::/30 CAFE:2::6
+ipv6 route D2::/30 ACAD:1::2 5
+
+
+============================S3
+enable
+conf term
+hostname S3
+int VLAN1
+Ip add 172.19.10.2 255.255.255.224
+no shut
+ip default-gateway 172.19.10.1
+
+
+
+
+------------------------------------Torre CUATRO DHCP
+enable
+configure terminal
+hostname CUATRO
+no ip domain-lookup
+banner motd #Solo personal autorizado#
+
+
+
+
+ipv6 unicast-routing
+
+
+
+
+int GIG0/0
+ip add 172.20.10.1 255.255.255.224
+ipv6 address D9:3::1/64
+ipv6 address FE80::4 link-local
+no shutdown
+
+
+
+
+ip dhcp pool DHCP-POOL-LAN1
+default-router 172.20.10.1
+network 172.20.10.0 255.255.255.224
+ip dhcp excluded-address 172.20.10.1 172.20.10.2
+
+
+
+
+ipv6 dhcp pool DHCPV6-LAN1
+address prefix D9:3::/64
+dns-server D9:3::10
+domain-name cisco.com
+exit
+
+
+
+
+interface GIG0/0
+ipv6 nd managed-config-flag
+!---ipv6 nd prefix default no-autoconfig
+ipv6 dhcp server DHCPV6-LAN1
+exit
+
+
+
+
+int Se0/0/0
+description Red Wan T4-T5
+ip add 11.0.0.9 255.255.255.252
+ipv6 address ACAD:3::9/64
+ipv6 address FE80::4 link-local
+clock rate 128000
+no shut
+exit
+
+
+
+
+int Se0/0/1
+description Red Wan T4-T6
+ip add 10.0.0.9 255.255.255.252
+ipv6 address CAFE:3::9/64
+ipv6 address FE80::4 link-local
+clock rate 128000
+no shut
+exit
+
+
+
+
+interface loopback1
+description Red LoopBack300
+ip add 172.20.8.1 255.255.254.0
+ipv6 address D9:2::1/64
+ipv6 address FE80::4 link-local
+exit
+
+
+
+
+interface loopback2
+description Red LoopBack2000
+ip add 172.20.0.1 255.255.248.0
+ipv6 address D9:1::1/64
+ipv6 address FE80::4 link-local
+exit
+
+
+ip route 0.0.0.0 0.0.0.0 s0/0/0
+ip route 0.0.0.0 0.0.0.0 s0/0/1 5
+ip route 172.21.0.0 255.255.252.0 s0/0/1
+ip route 172.21.0.0 255.255.252.0 s0/0/0 5
+
+
+ipv6 route ::/0 s0/0/0
+ipv6 route ::/0 s0/0/1 5
+ipv6 route D8::/30 s0/0/1
+ipv6 route D8::/30 s0/0/0 5
+
+
+
+
+============================S4
+enable
+conf term
+hostname S4
+int VLAN1
+Ip add 172.20.10.2 255.255.255.224
+no shut
+ip default-gateway 172.20.10.1
+
+
+------------------------------------Torre 5 SSH
+enable
+configure terminal
+hostname CINCO
+no ip domain-lookup
+ip domain-name cisco.com
+!===Se recomienda usar 1024
+crypto key generate rsa
+ip ssh version 2
+ip ssh time-out 60
+ip ssh authentication-retries 2
+line vty 0 4
+login local
+transport input ssh
+username ADMIN privilege 15 secret cisco111
+username REMOTO privilege 1 secret cisco222
+
+
+
+
+=====Realizar pruebas de SSH desde el PC
+ssh -l ADMIN 172.17.0.1
+=====Revision de conexion SSH en el Switch ssh
+show ip ssh
+show crypto key mypubkey rsa
+show ssh
+
+
+
+
+====================================
+
+
+
+
+ipv6 unicast-routing
+
+
+
+
+int GIG0/0
+ip add 172.17.0.1 255.255.255.224
+ipv6 address CB:2::1/64
+ipv6 address FE80::5 link-local
+no shutdown
+
+
+
+
+int GIG0/1
+ip add 10.0.0.2 255.255.255.252
+ipv6 address CAFE:1::2/64
+ipv6 address FE80::5 link-local
+no shutdown
+
+
+
+
+int Se0/0/1
+description Red Wan T5-T4
+ip add 11.0.0.10 255.255.255.252
+ipv6 address ACAD:3::10/64
+ipv6 address FE80::5 link-local
+clock rate 128000
+no shut
+exit
+
+
+
+
+int Se0/0/0
+description Red Wan T5-T6
+ip add 11.0.0.13 255.255.255.252
+ipv6 address ACAD:4::13/64
+ipv6 address FE80::5 link-local
+clock rate 128000
+no shut
+exit
+
+
+ip route 0.0.0.0 0.0.0.0 g0/1
+ip route 172.20.0.0 255.255.240.0 s0/0/1
+ip route 172.20.0.0 255.255.240.0 s0/0/0 5
+ip route 172.21.0.0 255.255.252.0 s0/0/0
+ip route 172.21.0.0 255.255.252.0 s0/0/1 5
+ip route 10.0.0.8 255.255.255.252 s0/0/1
+ip route 10.0.0.8 255.255.255.252 s0/0/0 5
+
+
+ipv6 route ::/0 CAFE:1::1
+ipv6 route D9::/30 s0/0/1
+ipv6 route D9::/30 s0/0/0 5
+ipv6 route D8::/30 s0/0/0
+ipv6 route D8::/30 s0/0/1 5
+ipv6 route CAFE:3::/64 s0/0/1
+ipv6 route CAFE:3::/64 s0/0/0 5
+
+
+============================S5
+enable
+conf term
+hostname S5
+int VLAN1
+Ip add 172.17.0.2 255.255.255.224
+no shut
+ip default-gateway 172.17.0.1
+
+
+
+
+------------------------------------Torre 6 DHCP
+enable
+configure terminal
+hostname SEIS
+no ip domain-lookup
+banner motd #Solo personal autorizado#
+
+
+
+
+ipv6 unicast-routing
+
+
+
+
+int GIG0/0
+ip add 172.21.2.129 255.255.255.224
+ipv6 address D8:3::1/64
+ipv6 address FE80::6 link-local
+no shutdown
+
+
+
+
+ip dhcp pool DHCP-POOL-LAN1
+default-router 172.21.2.129
+network 172.21.2.128 255.255.255.224
+ip dhcp excluded-address 172.21.2.129 172.21.2.130
+
+
+
+
+ipv6 dhcp pool DHCPV6-LAN1
+address prefix D8:3::/64
+dns-server D8:3::10
+domain-name cisco.com
+exit
+
+
+
+
+interface GIG0/0
+ipv6 nd managed-config-flag
+!------ipv6 nd prefix default no-autoconfig
+ipv6 dhcp server DHCPV6-LAN1
+exit
+
+
+
+
+int Se0/0/0
+description Red Wan T6-T4
+ip add 10.0.0.10 255.255.255.252
+ipv6 address CAFE:3::10/64
+ipv6 address FE80::6 link-local
+clock rate 128000
+no shut
+exit
+
+
+
+
+int Se0/0/1
+description Red Wan T6-T5
+ip add 11.0.0.14 255.255.255.252
+ipv6 address ACAD:4::14/64
+ipv6 address FE80::6 link-local
+clock rate 128000
+no shut
+exit
+
+
+
+
+interface loopback1
+description Red LoopBack80
+ip add 172.21.2.1 255.255.255.128
+ipv6 address D8:1::1/64
+ipv6 address FE80::6 link-local
+exit
+
+
+
+
+interface loopback2
+description Red LoopBack300
+ip add 172.21.0.1 255.255.254.0
+ipv6 address D8:2::1/64
+ipv6 address FE80::6 link-local
+exit
+
+
+ip route 0.0.0.0 0.0.0.0 s0/0/1
+ip route 0.0.0.0 0.0.0.0 s0/0/0 5
+ip route 172.20.0.0 255.255.240.0 s0/0/0
+ip route 172.20.0.0 255.255.240.0 s0/0/1 5
+
+
+ipv6 route ::/0 s0/0/1
+ipv6 route ::/0 s0/0/0 5
+ipv6 route D9::/30 s0/0/0
+ipv6 route D9::/30 s0/0/1 5
+
+
+
+
+============================S6
+enable
+conf term
+hostname S6
+
+
+int VLAN1
+Ip add 172.21.2.130 255.255.255.224
+no shut
+ip default-gateway 172.21.2.129
+exit
+
+
+
+
+
+
+COMANDOS PARA CONECTARSE POR SSH:
+
+ssh -oKexAlgorithms=+diffie-hellman-group-exchange-sha1 -l admin IP_ROUTER
+
+
+ssh -oKexAlgorithms=+diffie-hellman-group14-sha1 -oHostKeyAlgorithms=+ssh-rsa -l admin IP_ROUTER

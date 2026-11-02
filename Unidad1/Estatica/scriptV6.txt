@@ -1,0 +1,207 @@
+
+	--- Router 4 ---
+
+ena
+conf t
+hostname R4
+no ip domain-lookup
+ipv6 unicast-routing
+
+int gig0/0
+ip address 172.16.1.1 255.255.255.0
+ipv6 address db2:1::1/64
+ipv6 address fe80::3 link-local
+description R4 a Sw4
+no shutdown
+exit
+
+int se0/3/0
+ip address 192.168.1.1 255.255.255.252
+ipv6 address cafe:1::1/64
+description R4 a R5
+clock rate 128000
+no shutdown
+exit
+
+ip route 0.0.0.0 0.0.0.0 192.168.1.2
+ipv6 route ::/0 se0/3/0
+
+---
+ip route 172.16.2.0 255.255.255.0 192.168.1.2
+ip route 172.16.3.0 255.255.255.0 192.168.1.2
+
+ipv6 route db2:2::/64 cafe:1::2
+ipv6 route db2:3::/64 se0/3/0 
+---
+
+	--- Router 5 ---
+
+ena
+conf t
+hostname R5
+no ip domain-lookup
+ipv6 unicast-routing
+
+int gig0/0
+ip address 172.16.2.1 255.255.255.0
+ipv6 address db2:2::1/64
+ipv6 address fe80::2 link-local
+description R5 a Sw5
+no shutdown
+exit
+
+int se0/3/0
+ip address 192.168.1.2 255.255.255.252
+ipv6 address cafe:1::2/64
+clock rate 128000
+description R5 a R4
+no shutdown
+exit
+
+int se0/3/1
+ip address 192.168.1.5 255.255.255.252
+ipv6 address cafe:2::5/64
+clock rate 128000
+description R5 a R6
+no shutdown
+exit
+
+ip route 172.16.1.0 255.255.255.0 192.168.1.1
+ip route 172.16.3.0 255.255.255.0 192.168.1.6
+
+ipv6 route db2:1::/64 cafe:1::1
+ipv6 route db2:3::/64 se0/3/1
+
+
+	--- Router 6 --- comprobada
+ena
+conf t
+hostname R6
+no ip domain-lookup
+ipv6 unicast-routing
+
+int gig0/0
+ip address 172.16.3.1 255.255.255.0
+ipv6 address db2:3::1/64
+ipv6 address fe80::1 link-local
+description R6 a Sw6
+no shutdown
+exit
+
+int se0/0/1
+ip address 192.168.1.6 255.255.255.252
+ipv6 address cafe:2::6/64
+clock rate 128000
+description R6 a R5
+no shutdown
+exit
+
+ip route 0.0.0.0 0.0.0.0 192.168.1.5
+ipv6 ::0/0 se0/0/1
+
+---
+ip route 172.16.1.0 255.255.255.0 192.168.1.5
+ip route 172.16.2.0 255.255.255.0 192.168.1.5
+
+ipv6 route db2:1::/64 cafe:2::5
+ipv6 route db2:3::/64 se0/3/1
+---
+
+
+------------------------------
+		SWITCHES
+
+	--- Switch 4 ---
+ena 
+conf t
+hostname Sw4
+banner motd#
+******************************************
+*   ACCESO SOLO A PERSONAL AUTORIZADO.   *
+*       SE APLICARAN SANCIONES.  	 *
+******************************************#
+
+interface vlan 1
+ip address 172.16.1.2 255.255.255.0
+ipv6 address db2:1::2/64
+no shutdown
+exit
+
+ip default-gateway 172.16.1.1
+
+
+-- NO
+enable secret classs
+service password-encryption
+
+line console 0
+password cisco
+login 
+exit
+
+----
+
+	--- Switch 5 ---
+
+ena 
+conf t
+hostname Sw5
+
+banner motd#
+******************************************
+*   ACCESO SOLO A PERSONAL AUTORIZADO.   *
+*       SE APLICARAN SANCIONES.  	 *
+******************************************#
+
+interface vlan 1
+ip address 172.16.2.2 255.255.255.0
+ipv6 address db2:2::2/64
+no shutdown
+exit
+
+ip default-gateway 172.16.2.1
+
+-- NO
+enable secret classs
+service password-encryption
+
+line console 0
+password cisco
+login 
+exit
+
+----
+
+
+	--- Switch 6 ---
+
+ena 
+conf t
+hostname Sw6
+
+banner motd#
+******************************************
+*   ACCESO SOLO A PERSONAL AUTORIZADO.   *
+*       SE APLICARAN SANCIONES.  	 *
+******************************************#
+
+interface vlan 1
+ip address 172.16.3.2 255.255.255.0
+ipv6 address db2:3::2/64
+no shutdown
+exit
+
+ip default-gateway 172.16.3.1
+
+-- NO
+enable secret classs
+service password-encryption
+
+line console 0
+password cisco
+login 
+exit
+
+----
+
+
