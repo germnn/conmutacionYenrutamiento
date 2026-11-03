@@ -82,7 +82,7 @@ exit
 
 
 !------- Enrutamiento dinamico
-!------ Router 1
+!===Router 1===
 ena
 conf t
 router rip
@@ -92,7 +92,7 @@ network 11.0.0.0
 network 200.33.16.0
 passive-interface g0/0
 
-!------ Router 2
+!===Router 2===
 ena
 conf t
 router rip
@@ -102,7 +102,7 @@ network 192.168.2.0
 network 200.33.18.0
 network 200.33.18.128
 
-!------ Router 3
+!===Router 3===
 ena
 conf t
 router rip
@@ -114,4 +114,61 @@ passive-interface g0/0
 
 
 !------------ Switches
-!-----
+!===R1===
+ena
+conf t
+hostname Sw1
+
+int VLAN1
+ip add 11.0.0.2 255.0.0.0
+no shutdown
+exit
+ip default-gateway 11.255.255.254
+
+!===R2===
+!--- NO HAY
+
+!===R3===
+ena
+conf t
+hostname Sw3
+
+int VLAN1
+ip add 10.0.0.2 255.0.0.0
+no shutdown
+ip default-gateway 10.255.255.254
+
+!------------- DHCP
+!===R1===
+ip dhcp pool DHCP-POOL-LAN1
+network 11.0.0.0 255.0.0.0
+default-router 11.255.255.254
+ip dhcp excluded-address 11.0.0.1 11.0.0.2
+ip dhcp excluded-address 11.255.255.254 
+
+!===R2===
+!--- no hay
+
+!===R3===
+ip dhcp pool DHCP-POOL-LAN1
+network 10.0.0.0 255.0.0.0
+default-router 10.255.255.254
+ip dhcp excluded-address 10.0.0.1 10.0.0.2
+ip dhcp excluded-address 10.255.255.254 
+
+
+!------------- SSH
+!===R2===
+ip domain-name cisco.com
+!===Se recomienda usar 1024
+crypto key generate rsa 
+1024
+ip ssh version 2
+ip ssh time-out 60
+ip ssh authentication-retries 2
+line vty 0 4
+login local
+transport input ssh
+username ADMIN privilege 15 secret cisco111
+username REMOTO privilege 1 secret cisco222
+
