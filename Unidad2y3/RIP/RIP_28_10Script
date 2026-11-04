@@ -91,6 +91,7 @@ network 192.168.1.0
 network 11.0.0.0
 network 200.33.16.0
 passive-interface g0/0
+exit
 
 !===Router 2===
 ena
@@ -101,6 +102,7 @@ network 192.168.1.0
 network 192.168.2.0
 network 200.33.18.0
 network 200.33.18.128
+exit
 
 !===Router 3===
 ena
@@ -111,18 +113,18 @@ network 192.168.2.0
 network 10.0.0.0
 network 200.33.17.0
 passive-interface g0/0
-
+exit
 
 !------------ Switches
 !===R1===
 ena
 conf t
+no ip domain-lookup
 hostname Sw1
 
 int VLAN1
 ip add 11.0.0.2 255.0.0.0
 no shutdown
-exit
 ip default-gateway 11.255.255.254
 
 !===R2===
@@ -131,6 +133,7 @@ ip default-gateway 11.255.255.254
 !===R3===
 ena
 conf t
+no ip domain-lookup
 hostname Sw3
 
 int VLAN1
@@ -150,7 +153,7 @@ ip dhcp excluded-address 11.255.255.254
 !--- no hay
 
 !===R3===
-ip dhcp pool DHCP-POOL-LAN1
+ip dhcp pool DHCP-POOL-LAN3
 network 10.0.0.0 255.0.0.0
 default-router 10.255.255.254
 ip dhcp excluded-address 10.0.0.1 10.0.0.2
@@ -171,4 +174,120 @@ login local
 transport input ssh
 username ADMIN privilege 15 secret cisco111
 username REMOTO privilege 1 secret cisco222
+
+!- Martes 03/11 RIP NG V2
+!--------------------------------------------------------------
+!----- r1 activar ipv6 y crear el proceso ng para todo el router
+
+!=======R1=========
+ipv6 unicast-routing
+ipv6 router rip R1
+exit
+
+!---Configuracion de interfaces
+int s0/0/0
+description Red WAN A r2
+
+ipv6 rip R1 enable
+ipv6 add 192:1::1/64
+ipv6 add FE80::1 link-local
+no shutdown
+exit
+
+int g0/0
+description RED LAN r1
+
+ipv6 rip R1 enable
+ipv6 add 11::254/64
+ipv6 add FE80::1 link-local
+no shutdown
+exit
+
+int lo1
+description loopback r1
+
+ipv6 rip R1 enable
+ipv6 add 16::1/64
+ipv6 add FE80::1 link-local
+exit
+
+!=======R2=========
+!- activar ipv6 y crear el proceso NG para todo el router
+
+ipv6 unicast-routing
+ipv6 router rip R2
+exit
+
+!- Configurar interfaces del router
+int s0/0/0
+description Red WAN R1
+
+ipv6 rip R2 enable
+ipv6 add 192:1::1/64
+ipv6 add FE80::2 link-local
+
+no shutdown 
+exit
+
+int s0/0/1
+description Red WAN R3
+
+ipv6 rip R2 enable
+ipv6 add 192:2::1/64
+ipv6 add FE80::2 link-local
+no shutdown
+exit
+
+
+int loopback1
+ipv6 rip R2 enable
+ipv6 add 200::1/64
+ipv6 add FE80::2 link-local
+exit
+
+int loopback2
+ipv6 rip R2 enable
+ipv6 add 200:128::129/64
+ipv6 add FE80::2 link-local
+exit
+
+!===========R3=============
+!- activar ipv6 y crear el proceso NG para todo el router
+ipv6 unicast-routing
+ipv6 router rip R3
+exit
+
+
+!- Configurar interfaces del router
+int se0/0/0
+description Red WAN a R2
+
+ipv6 rip R3 enable
+ipv6 add 192:2::2/64
+ipv6 add FE80::3 link-local
+no shutdown
+exit
+
+int g0/0
+description RED LAN r3
+
+ipv6 rip R3 enable
+ipv6 add 10::254/64
+ipv6 add FE80::3 link-local
+no shutdown
+exit
+
+int lo1
+description loopback r1
+
+ipv6 rip R3 enable
+ipv6 add 17::1/64
+ipv6 add FE80::3 link-local
+exit
+
+
+
+
+
+
 
