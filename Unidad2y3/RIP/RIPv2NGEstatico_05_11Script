@@ -1,0 +1,265 @@
+
+!--------------- Router 1
+enable
+conf t
+hostname R1
+no ip domain-lookup
+banner motd #SOlo personal autorizado#
+ipv6 unicast-routing
+
+!===Enrutamiendo Dinamico=== 
+!- ipv4
+router rip
+no auto-summary
+version 2
+network 192.168.1.0
+network 11.0.0.0
+network 200.33.16.0
+passive-interface g0/0
+exit
+
+!- ipv6
+ipv6 router rip R1
+exit
+
+!===Interfaces===
+interface s0/0/0
+description Red WAN A r2
+ip address 192.168.1.1 255.255.255.0
+
+ipv6 rip R1 enable
+ipv6 add 192:1::1/64
+ipv6 add FE80::1 link-local
+
+clock rate 128000
+no shutdown 
+exit
+
+int g0/0
+description RED LAN r1
+ip address 11.255.255.254 255.0.0.0
+
+ipv6 rip R1 enable
+ipv6 add 11::254/64
+ipv6 add FE80::1 link-local
+
+ipv6 nd managed-config-flag
+ipv6 dhcp server DHCPV6-LAN1
+no shutdown
+exit
+
+int lo1
+description loopback r1
+ip address 200.33.16.1 255.255.255.0
+
+ipv6 rip R1 enable
+ipv6 add 16::1/64
+ipv6 add FE80::1 link-local
+exit
+
+!===DHCP===
+ip dhcp excluded-address 11.0.0.1 11.0.0.2
+ip dhcp excluded-address 11.255.255.254 
+ip dhcp pool DHCP-POOL-LAN1
+network 11.0.0.0 255.0.0.0
+default-router 11.255.255.254
+exit
+
+ipv6 dhcp pool DHCPV6-LAN1
+address prefix 11::/64
+dns-server 11::254
+domain-name cisco.com
+exit
+
+
+!----------------------------------------------
+!--------------- Router 2
+enable
+conf t
+hostname R2
+no ip domain-lookup
+banner motd #SOlo personal autorizado#
+ipv6 unicast-routing
+
+!===Enrutamiendo Dinamico=== 
+!- ipv4
+router rip
+no auto-summary
+default-information originate
+version 2
+network 192.168.1.0
+network 192.168.2.0
+network 200.33.18.0
+network 200.33.18.128
+passive-interface g0/0
+exit
+
+!- ipv6
+ipv6 router rip R2
+exit
+
+!===Interfaces===
+int s0/0/0
+description Red WAN R1
+ip address 192.168.1.2 255.255.255.0
+
+ipv6 rip R2 enable
+ipv6 rip R2 default-information originate
+ipv6 add 192:1::2/64
+ipv6 add FE80::2 link-local
+
+clock rate 128000
+no shutdown
+exit
+
+int s0/0/1
+description Red WAN R3
+ip address 192.168.2.2 255.255.255.0
+
+ipv6 rip R2 enable
+ipv6 rip R2 default-information originate
+ipv6 add 192:2::2/64
+ipv6 add FE80::2 link-local
+
+clock rate 128000
+no shut
+exit
+
+int lo1
+ip address 200.33.18.1 255.255.255.128
+
+ipv6 rip R2 enable
+ipv6 add 200::1/64
+ipv6 add FE80::2 link-local
+exit
+
+int g0/0
+description Enlace_PC_Estatica
+ip address 200.33.18.129 255.255.255.128
+
+ipv6 rip R2 enable
+ipv6 add 200:128::129/64
+ipv6 add FE80::2 link-local
+no shutdown
+exit
+
+!===Enrutamiento Estatico
+ip route 0.0.0.0 0.0.0.0 200.33.18.130
+ipv6 route ::/0 200:128::130
+
+!===SSH===
+ip domain-name cisco.com
+!===Se recomienda usar 1024
+crypto key generate rsa 
+1024
+ip ssh version 2
+ip ssh time-out 60
+ip ssh authentication-retries 2
+line vty 0 4
+login local
+transport input ssh
+username ADMIN privilege 15 secret cisco111
+username REMOTO privilege 1 secret cisco222
+
+!----------------------------------------------
+!--------------- Router 3
+enable
+conf t
+hostname R3
+no ip domain-lookup
+banner motd #SOlo personal autorizado#
+ipv6 unicast-routing
+
+!===Enrutamiendo Dinamico=== 
+!- ipv4
+router rip
+no auto-summary
+version 2
+network 192.168.2.0
+network 10.0.0.0
+network 200.33.17.0
+passive-interface g0/0
+exit
+
+!- ipv6
+ipv6 router rip R3
+exit
+
+
+!===Interfaces===
+int s0/0/0
+description Red WAN a R2
+ip add 192.168.2.1 255.255.255.0
+
+ipv6 rip R3 enable
+ipv6 add 192:2::1/64
+ipv6 add FE80::3 link-local
+
+clock rate 128000
+no shut
+exit
+
+int g0/0
+description RED LAN r3
+ip add 10.255.255.254 255.0.0.0
+
+ipv6 rip R3 enable
+ipv6 add 10::254/64
+ipv6 add FE80::3 link-local
+
+ipv6 nd managed-config-flag
+ipv6 dhcp server DHCPV6-LAN3
+
+no shut
+exit
+
+int lo1
+description loopback r3
+ip add 200.33.17.1 255.255.255.0
+
+ipv6 rip R3 enable
+ipv6 add 17::1/64
+ipv6 add FE80::3 link-local
+exit
+
+!===DHCP===
+ip dhcp excluded-address 10.0.0.1 10.0.0.2
+ip dhcp excluded-address 10.255.255.254 
+ip dhcp pool DHCP-POOL-LAN3
+network 10.0.0.0 255.0.0.0
+default-router 10.255.255.254
+exit
+
+ipv6 dhcp pool DHCPV6-LAN3
+address prefix 10::/64
+dns-server 10::254
+domain-name cisco.com
+exit
+
+!-------------------------------- Switches
+!===R1===
+ena
+conf t
+no ip domain-lookup
+hostname Sw1
+
+int VLAN1
+ip add 11.0.0.2 255.0.0.0
+no shutdown
+ip default-gateway 11.255.255.254
+
+!===R2===
+!--- NO HAY
+
+!===R3===
+ena
+conf t
+no ip domain-lookup
+hostname Sw3
+
+int VLAN1
+ip add 10.0.0.2 255.0.0.0
+no shutdown
+ip default-gateway 10.255.255.254
+
+!--------------------------------------------------------------------------------------------------------
