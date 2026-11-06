@@ -263,3 +263,8 @@ no shutdown
 ip default-gateway 10.255.255.254
 
 !--------------------------------------------------------------------------------------------------------
+!-------------- CONEXION SSH
+
+ssh -oKexAlgorithms=+diffie-hellman-group-exchange-sha1 -l admin 152.16.4.1
+ssh -oKexAlgorithms=+diffie-hellman-group14-sha1 -oHostKeyAlgorithms=+ssh-rsa -l admin 152.16.4.1
+
