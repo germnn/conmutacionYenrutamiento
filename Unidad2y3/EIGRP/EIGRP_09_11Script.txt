@@ -1,0 +1,350 @@
+
+!--------------- Router 1
+enable
+conf t
+hostname R1
+no ip domain-lookup
+banner motd #SOlo personal autorizado#
+ipv6 unicast-routing
+
+!===Enrutamiendo Dinamico v6=== 
+ipv6 router eigrp 2
+eigrp router-id 1.1.1.1
+passive-interface g0/0
+no shutdown
+exit
+
+!===Interfaces===
+interface s0/0/0
+description Red WAN A r2
+ip address 192.168.1.1 255.255.255.0
+
+ipv6 add 192:1::1/64
+ipv6 add FE80::1 link-local
+ipv6 eigrp 2
+
+clock rate 128000
+no shutdown 
+exit
+
+int g0/0
+description RED LAN r1
+ip address 11.255.255.254 255.0.0.0
+
+ipv6 add 11::254/64
+ipv6 add FE80::1 link-local
+ipv6 eigrp 2
+
+ipv6 nd managed-config-flag
+ipv6 dhcp server DHCPV6-LAN1
+no shutdown
+exit
+
+int lo1
+description loopback r1
+ip address 200.33.16.1 255.255.255.0
+
+ipv6 add 16::1/64
+ipv6 add FE80::1 link-local
+ipv6 eigrp 2
+
+exit
+
+!===Enrutamiendo Dinamico v4=== 
+router eigrp 1
+eigrp router-id 1.1.1.1
+passive-interface g0/0
+network 192.168.1.0 0.0.0.255
+network 11.0.0.0 0.255.255.255
+network 200.33.16.0 0.0.0.255
+no auto-summary
+exit
+
+
+!===DHCP===
+ip dhcp excluded-address 11.0.0.1 11.0.0.2
+ip dhcp excluded-address 11.255.255.254 
+ip dhcp pool DHCP-POOL-LAN1
+network 11.0.0.0 255.0.0.0
+default-router 11.255.255.254
+exit
+
+ipv6 dhcp pool DHCPV6-LAN1
+address prefix 11::/64
+dns-server 11::254
+domain-name cisco.com
+exit
+
+
+!----------------------------------------------
+!--------------- Router 2
+enable
+conf t
+hostname R2
+no ip domain-lookup
+banner motd #SOlo personal autorizado#
+ipv6 unicast-routing
+
+!===Enrutamiendo Dinamico v6=== 
+ipv6 router eigrp 2
+eigrp router-id 2.2.2.2
+redistribute static
+no shutdown
+exit
+
+!===Interfaces===
+int s0/0/0
+description Red WAN R1
+ip address 192.168.1.2 255.255.255.0
+
+ipv6 add 192:1::2/64
+ipv6 add FE80::2 link-local
+ipv6 eigrp 2
+
+clock rate 128000
+no shutdown
+exit
+
+int s0/0/1
+description Red WAN R3
+ip address 192.168.2.2 255.255.255.0
+
+ipv6 add 192:2::2/64
+ipv6 add FE80::2 link-local
+ipv6 eigrp 2
+
+clock rate 128000
+no shut
+exit
+
+int lo1
+ip address 200.33.18.1 255.255.255.128
+
+ipv6 add 200::1/64
+ipv6 add FE80::2 link-local
+ipv6 eigrp 2
+exit
+
+int g0/0
+description Enlace_R4
+ip address 192.168.3.1 255.255.255.0
+
+ipv6 add 192:3::1/64
+ipv6 add FE80::2 link-local
+ipv6 eigrp 2
+no shutdown
+exit
+
+!===Enrutamiento Dinamico v4===
+router eigrp 1
+eigrp router-id 2.2.2.2
+network 192.168.1.0 0.0.0.255 
+network 192.168.2.0 0.0.0.255
+network 192.168.3.0 0.0.0.255
+network 200.33.18.0 0.0.0.127
+redistribute static
+no auto-summary
+exit
+
+
+!===Enrutamiento Estatico
+ip route 0.0.0.0 0.0.0.0 192.168.3.2
+ipv6 route ::/0 192:3::2
+
+!===SSH===
+ip domain-name cisco.com
+!===Se recomienda usar 1024
+crypto key generate rsa 
+1024
+ip ssh version 2
+ip ssh time-out 60
+ip ssh authentication-retries 2
+line vty 0 4
+login local
+transport input ssh
+username ADMIN privilege 15 secret cisco111
+username REMOTO privilege 1 secret cisco222
+
+!----------------------------------------------
+!--------------- Router 3
+enable
+conf t
+hostname R3
+no ip domain-lookup
+banner motd #SOlo personal autorizado#
+ipv6 unicast-routing
+
+!===Enrutamiendo Dinamico v6=== 
+ipv6 router eigrp 2
+eigrp router-id 3.3.3.3
+passive-interface g0/0
+no shutdown
+exit
+
+
+!===Interfaces===
+int s0/0/0
+description Red WAN a R2
+ip add 192.168.2.1 255.255.255.0
+
+ipv6 add 192:2::1/64
+ipv6 add FE80::3 link-local
+ipv6 eigrp 2
+
+clock rate 128000
+no shut
+exit
+
+int g0/0
+description RED LAN r3
+ip add 10.255.255.254 255.0.0.0
+
+ipv6 add 10::254/64
+ipv6 add FE80::3 link-local
+ipv6 nd managed-config-flag
+ipv6 dhcp server DHCPV6-LAN3
+ipv6 eigrp 2
+
+no shut
+exit
+
+int lo1
+description loopback r3
+ip add 200.33.17.1 255.255.255.0
+
+ipv6 add 17::1/64
+ipv6 add FE80::3 link-local
+ipv6 eigrp 2
+exit
+
+!===Enrutamiento Dinamico v4===
+router eigrp 1
+eigrp router-id 3.3.3.3
+no auto-summary
+network 192.168.2.0 0.0.0.255
+network 10.0.0.0 0.255.255.255
+network 200.33.17.0 0.0.0.255
+passive-interface g0/0
+exit
+
+!===DHCP===
+ip dhcp excluded-address 10.0.0.1 10.0.0.2
+ip dhcp excluded-address 10.255.255.254 
+ip dhcp pool DHCP-POOL-LAN3
+network 10.0.0.0 255.0.0.0
+default-router 10.255.255.254
+exit
+
+ipv6 dhcp pool DHCPV6-LAN3
+address prefix 10::/64
+dns-server 10::254
+domain-name cisco.com
+exit
+
+!----------------------------------------------
+!--------------- Router 4
+enable
+conf t
+hostname R4
+no ip domain-lookup
+banner motd #SOlo personal autorizado#
+ipv6 unicast-routing
+
+!===Enrutamiendo Dinamico v6=== 
+ipv6 router eigrp 2
+eigrp router-id 4.4.4.4
+passive-interface g0/1
+no shutdown
+exit
+
+
+!===Interfaces===
+int g0/0
+description Enlace_R2
+ip add 192.168.3.2 255.255.255.0
+
+ipv6 add 192:3::2/64
+ipv6 add FE80::4 link-local
+ipv6 eigrp 2
+no shut
+exit
+
+int g0/1
+description Enlace_Sw4
+ip add 12.255.255.254 255.0.0.0
+
+ipv6 add 12::254/64
+ipv6 add FE80::4 link-local
+ipv6 eigrp 2
+ipv6 dhcp server DHCPV6-LAN4
+ipv6 nd managed-config-flag
+no shut
+exit
+
+!===Enrutamiento Dinamico v4===
+router eigrp 1
+eigrp router-id 4.4.4.4
+network 192.168.3.0 0.0.0.255
+network 12.0.0.0 0.255.255.255
+passive-interface g0/1
+no auto-summary
+exit
+
+!===DHCP===
+ip dhcp excluded-address 12.0.0.1 12.0.0.2
+ip dhcp excluded-address 12.255.255.254 
+ip dhcp pool DHCP-POOL-LAN4
+network 12.0.0.0 255.0.0.0
+default-router 12.255.255.254
+exit
+
+ipv6 dhcp pool DHCPV6-LAN4
+address prefix 12::/64
+dns-server 12::254
+domain-name cisco.com
+exit
+
+
+!---------------------------------- Switches
+!===R1===
+ena
+conf t
+no ip domain-lookup
+hostname Sw1
+
+int VLAN1
+ip add 11.0.0.2 255.0.0.0
+no shutdown
+ip default-gateway 11.255.255.254
+
+!===R2===
+!--- NO HAY
+
+!===R3===
+ena
+conf t
+no ip domain-lookup
+hostname Sw3
+
+int VLAN1
+ip add 10.0.0.2 255.0.0.0
+no shutdown
+ip default-gateway 10.255.255.254
+
+!===R4===
+ena
+conf t
+no ip domain-lookup
+hostname Sw4
+
+int vlan1
+ip add 12.0.0.2 255.0.0.0
+no shutdown
+ip default-gateway 12.255.255.254
+
+!--------------------------------------------------------------------------------------------------------
+!-------------- CONEXION SSH
+
+ssh -oKexAlgorithms=+diffie-hellman-group-exchange-sha1 -l ADMIN 192.168.2.2
+ssh -oKexAlgorithms=+diffie-hellman-group14-sha1 -oHostKeyAlgorithms=+ssh-rsa -l ADMIN 192.168.2.2
+
